@@ -6,15 +6,27 @@ function MyApp() {
   const [characters, setCharacters] = useState([]);
 
   function removeOneCharacter(index) {
+    const pick = characters.filter((character, i) => {
+      return i === index;
+    });
     const updated = characters.filter((character, i) => {
       return i !== index;
     });
-    setCharacters(updated);
+    deleteUser(pick[0]._id)
+      .then((res) => {
+        if (res.status === 204) setCharacters(updated);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   }
 
   function updateList(person) {
     postUser(person)
-      .then(() => setCharacters([...characters, person]))
+      .then((res) => (res.status === 201 ? res.json() : undefined))
+      .then((json) => {
+        if (json) addCharacter(json);
+      })
       .catch((error) => {
         console.log(error);
       });
@@ -26,7 +38,7 @@ function MyApp() {
   }
 
   function postUser(person) {
-    const promise = fetch("Http://localhost:8000/users", {
+    const promise = fetch("http://localhost:8000/users", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -37,10 +49,21 @@ function MyApp() {
     return promise;
   }
 
+  function deleteUser(_id) {
+    const promise = fetch("http://localhost:8000/users/" + _id, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    return promise;
+  }
+
   useEffect(() => {
     fetchUsers()
-      .then((res) => (res.status === 201 ? res.json() : undefined))
-      .then((json) => setCharacters(json["users_list"]))
+      .then((res) => (res.status === 200 ? res.json() : undefined))
+      .then((json) => setCharacters(json))
       .catch((error) => {
         console.log(error);
       });
